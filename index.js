@@ -1,7 +1,12 @@
 import fs from 'node:fs';
 import xml2js, { Builder } from 'xml2js';
 
-const xmlBuilder = new Builder();
+const xmlBuilder = new Builder({
+  renderOpts: {
+    pretty: true,
+    indent: '    ',
+  },
+});
 
 function checkTypeErrors(configPath, version, buildNumber) {
   if (typeof configPath !== 'string') {
