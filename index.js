@@ -20,10 +20,6 @@ function checkTypeErrors(configPath, version, buildNumber) {
   if (buildNumber && typeof buildNumber !== 'number') {
     throw new TypeError('"buildNumber" argument must be an integer');
   }
-
-  if (buildNumber && buildNumber !== Number.parseInt(buildNumber, 10)) {
-    throw new TypeError('"buildNumber" argument must be an integer');
-  }
 }
 
 async function getXml(configPath) {
@@ -57,6 +53,10 @@ function setAttributes(xml, version, buildNumber) {
   return newXml;
 }
 
+function getCurrentUnixTimeInSeconds() {
+  return Math.floor(Date.now() / 1000);
+}
+
 /**
  * set Version and/or Build Number of Cordova config.xml.
  * @param {string} [configPath]
@@ -66,13 +66,18 @@ function setAttributes(xml, version, buildNumber) {
 async function cordovaSetVersion({ configPath, version, buildNumber } = {}) {
   const cPath = configPath || './config.xml';
 
-  checkTypeErrors(cPath, version, buildNumber);
+  const bNumber =
+    buildNumber === 'date'
+      ? getCurrentUnixTimeInSeconds()
+      : Number.parseInt(buildNumber, 10) || buildNumber;
+
+  checkTypeErrors(cPath, version, bNumber);
 
   const currentConfig = await getXml(cPath);
 
-  const v = !version && !buildNumber ? getVersionFromPackage(version) : version;
+  const v = !version && !bNumber ? getVersionFromPackage(version) : version;
 
-  const newConfig = setAttributes(currentConfig, v, buildNumber);
+  const newConfig = setAttributes(currentConfig, v, bNumber);
 
   const newData = xmlBuilder.buildObject(newConfig);
   return fs.writeFileSync(cPath, newData, { encoding: 'utf8' });
